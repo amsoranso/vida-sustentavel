@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EcoKids – Separando o Lixo (Versão Simples S1)</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}
+    h1{text-align:center;margin-top:0}
+    .menuBtn{position:fixed;top:10px;left:10px}
+    button{padding:10px 15px;margin:5px;border-radius:8px;border:1px solid #ccc;cursor:pointer}
+    .lixeiras,.itens{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
+    .lixeira,.item{border:1px solid #ccc;border-radius:8px;padding:10px 15px;background:white;cursor:pointer}
+    .lixeira{min-width:100px;text-align:center}
+    #feedback{margin-top:15px;font-weight:bold}
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="menuBtn"><button>⬅️ Menu</button></a>
+
+  <h1>Separando o Lixo</h1>
+  <p>1️⃣ Clique em um item e depois clique na lixeira correta.</p>
+
+  <div class="itens">
+    <div class="item" data-tipo="papel">📰 Jornal</div>
+    <div class="item" data-tipo="papel">📦 Caixa</div>
+    <div class="item" data-tipo="plastico">🥤 Garrafa PET</div>
+    <div class="item" data-tipo="plastico">🛍️ Sacola</div>
+    <div class="item" data-tipo="vidro">🍾 Garrafa</div>
+    <div class="item" data-tipo="organico">🍌 Casca de Banana</div>
+  </div>
+
+  <h3>Escolha a lixeira:</h3>
+  <div class="lixeiras">
+    <div class="lixeira" data-aceita="papel">📄 Papel</div>
+    <div class="lixeira" data-aceita="plastico">🧴 Plástico</div>
+    <div class="lixeira" data-aceita="vidro">🍾 Vidro</div>
+    <div class="lixeira" data-aceita="organico">🍎 Orgânico</div>
+  </div>
+
+  <div id="feedback">Clique em um item para começar.</div>
+
+  <button id="reset">Reiniciar</button>
+
+<script>
+let itemSelecionado = null;
+
+const itens = document.querySelectorAll('.item');
+const lixeiras = document.querySelectorAll('.lixeira');
+const feedback = document.getElementById('feedback');
+
+itens.forEach(item => {
+  item.addEventListener('click', () => {
+    itemSelecionado = item;
+    feedback.textContent = 'Agora clique na lixeira correta...';
+  });
+});
+
+lixeiras.forEach(lixeira => {
+  lixeira.addEventListener('click', () => {
+    if (!itemSelecionado) return;
+
+    const tipoItem = itemSelecionado.getAttribute('data-tipo');
+    const aceita = lixeira.getAttribute('data-aceita');
+
+    if (tipoItem === aceita) {
+      feedback.textContent = '✅ Acertou!';
+      itemSelecionado.style.opacity = '0.4';
+      itemSelecionado.style.pointerEvents = 'none';
+    } else {
+      feedback.textContent = '❌ Errou! Tente outra lixeira.';
+    }
+
+    itemSelecionado = null;
+  });
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  itens.forEach(i => {
+    i.style.opacity = '1';
+    i.style.pointerEvents = 'auto';
+  });
+  feedback.textContent = 'Clique em um item para começar.';
+  itemSelecionado = null;
+});
+</script>
+</body>
+</html>
