@@ -3,87 +3,234 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EcoKids – Separando o Lixo (Versão Simples S1)</title>
+  <title>EcoKids – Separando o Lixo (Básica)</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}
-    h1{text-align:center;margin-top:0}
-    .menuBtn{position:fixed;top:10px;left:10px}
-    button{padding:10px 15px;margin:5px;border-radius:8px;border:1px solid #ccc;cursor:pointer}
-    .lixeiras,.itens{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
-    .lixeira,.item{border:1px solid #ccc;border-radius:8px;padding:10px 15px;background:white;cursor:pointer}
-    .lixeira{min-width:100px;text-align:center}
-    #feedback{margin-top:15px;font-weight:bold}
+    :root{
+      --bg:#f7f7f8; --card:#ffffff; --text:#1f2937; --muted:#6b7280; --ok:#16a34a; --err:#dc2626; --brand:#0ea5e9; --border:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,sans-serif;background:var(--bg);color:var(--text)}
+    header{padding:24px 16px;text-align:center}
+    h1{margin:0;font-size:clamp(22px,3vw,32px);font-weight:700}
+    .sub{color:var(--muted);margin-top:6px}
+
+    .container{max-width:1000px;margin:0 auto;padding:16px;display:grid;gap:16px}
+
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+    .panel h2{margin:0 0 12px 0;font-size:18px}
+
+    .flex{display:flex;gap:12px;flex-wrap:wrap}
+
+    /* Itens */
+    .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+    .item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:12px;cursor:grab;user-select:none;min-height:92px;transition:transform .1s ease, box-shadow .2s}
+    .item:active{transform:scale(.98)}
+    .item[data-done="true"]{opacity:.45;cursor:default;text-decoration:line-through}
+    .emoji{font-size:28px}
+    .label{font-size:14px;color:var(--muted)}
+
+    /* Lixeiras */
+    .bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .bin{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:14px;min-height:140px;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:flex-start}
+    .bin.dragover{border-color:var(--brand);box-shadow:0 0 0 4px rgba(14,165,233,.12)}
+    .bin-title{font-weight:600}
+    .bin-emoji{font-size:28px}
+    .bin small{color:var(--muted)}
+
+    .feedback{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;gap:10px}
+    .feedback[aria-live]{min-height:44px}
+    .fb-ok{color:var(--ok)}
+    .fb-err{color:var(--err)}
+
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap}
+    button{appearance:none;border:1px solid var(--border);background:#fff;padding:10px 14px;border-radius:10px;cursor:pointer}
+    button.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .muted{color:var(--muted)}
+
+    footer{padding:24px 16px;text-align:center;color:var(--muted);font-size:14px}
   </style>
 </head>
 <body>
+  <header>
+    <h1>EcoKids — Separando o Lixo</h1>
+    <div class="sub">Arraste os itens para a lixeira correta. (Também funciona por toque: toque no item e depois na lixeira)</div>
+  </header>
 
-  <a href="index.html" class="menuBtn"><button>⬅️ Menu</button></a>
+  <main class="container">
+    <section class="panel">
+      <h2>1) Escolha a lixeira</h2>
+      <div class="bins" id="bins" aria-label="Lixeiras">
+        <div class="bin" data-accept="papel" tabindex="0" aria-label="Lixeira de papel">
+          <div class="bin-emoji">🗞️</div>
+          <div class="bin-title">Papel</div>
+          <small><span class="count">0</span> correto(s)</small>
+        </div>
+        <div class="bin" data-accept="plastico" tabindex="0" aria-label="Lixeira de plástico">
+          <div class="bin-emoji">🧴</div>
+          <div class="bin-title">Plástico</div>
+          <small><span class="count">0</span> correto(s)</small>
+        </div>
+        <div class="bin" data-accept="vidro" tabindex="0" aria-label="Lixeira de vidro">
+          <div class="bin-emoji">🍾</div>
+          <div class="bin-title">Vidro</div>
+          <small><span class="count">0</span> correto(s)</small>
+        </div>
+        <div class="bin" data-accept="organico" tabindex="0" aria-label="Lixeira de orgânico">
+          <div class="bin-emoji">🍎</div>
+          <div class="bin-title">Orgânico</div>
+          <small><span class="count">0</span> correto(s)</small>
+        </div>
+      </div>
+    </section>
 
-  <h1>Separando o Lixo</h1>
-  <p>1️⃣ Clique em um item e depois clique na lixeira correta.</p>
+    <section class="panel">
+      <h2>2) Itens para descartar</h2>
+      <div class="items" id="items">
+        <!-- Papel -->
+        <div class="item" draggable="true" data-type="papel" role="button" aria-label="Jornal (papel)">
+          <div class="emoji">📰</div>
+          <div class="label">Jornal</div>
+        </div>
+        <div class="item" draggable="true" data-type="papel" role="button" aria-label="Caixa (papel)">
+          <div class="emoji">📦</div>
+          <div class="label">Caixa</div>
+        </div>
+        <!-- Plástico -->
+        <div class="item" draggable="true" data-type="plastico" role="button" aria-label="Garrafa PET (plástico)">
+          <div class="emoji">🥤</div>
+          <div class="label">Garrafa PET</div>
+        </div>
+        <div class="item" draggable="true" data-type="plastico" role="button" aria-label="Sacola (plástico)">
+          <div class="emoji">🛍️</div>
+          <div class="label">Sacola</div>
+        </div>
+        <!-- Vidro -->
+        <div class="item" draggable="true" data-type="vidro" role="button" aria-label="Pote de vidro (vidro)">
+          <div class="emoji">🫙</div>
+          <div class="label">Pote de vidro</div>
+        </div>
+        <div class="item" draggable="true" data-type="vidro" role="button" aria-label="Garrafa (vidro)">
+          <div class="emoji">🍾</div>
+          <div class="label">Garrafa</div>
+        </div>
+        <!-- Orgânico -->
+        <div class="item" draggable="true" data-type="organico" role="button" aria-label="Casca de banana (orgânico)">
+          <div class="emoji">🍌</div>
+          <div class="label">Casca de banana</div>
+        </div>
+        <div class="item" draggable="true" data-type="organico" role="button" aria-label="Maçã comida (orgânico)">
+          <div class="emoji">🍏</div>
+          <div class="label">Maçã comida</div>
+        </div>
+      </div>
+    </section>
 
-  <div class="itens">
-    <div class="item" data-tipo="papel">📰 Jornal</div>
-    <div class="item" data-tipo="papel">📦 Caixa</div>
-    <div class="item" data-tipo="plastico">🥤 Garrafa PET</div>
-    <div class="item" data-tipo="plastico">🛍️ Sacola</div>
-    <div class="item" data-tipo="vidro">🍾 Garrafa</div>
-    <div class="item" data-tipo="organico">🍌 Casca de Banana</div>
-  </div>
+    <section class="panel">
+      <h2>Feedback</h2>
+      <div class="feedback" aria-live="polite" id="feedback">Toque ou arraste um item até a lixeira correta.</div>
+    </section>
 
-  <h3>Escolha a lixeira:</h3>
-  <div class="lixeiras">
-    <div class="lixeira" data-aceita="papel">📄 Papel</div>
-    <div class="lixeira" data-aceita="plastico">🧴 Plástico</div>
-    <div class="lixeira" data-aceita="vidro">🍾 Vidro</div>
-    <div class="lixeira" data-aceita="organico">🍎 Orgânico</div>
-  </div>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="primary" id="reset">Reiniciar</button>
+        <span class="muted">Dica: funciona em desktop (arrastar) e em celular (toque no item → toque na lixeira).</span>
+      </div>
+    </section>
+  </main>
 
-  <div id="feedback">Clique em um item para começar.</div>
+  <footer>EcoKids • Jogo 1 (versão básica) • HTML/JS puro</footer>
 
-  <button id="reset">Reiniciar</button>
+  <script>
+    // --- Estado simples ---
+    let selectedItem = null; // suporte a toque: item selecionado
 
-<script>
-let itemSelecionado = null;
+    const feedback = document.getElementById('feedback');
+    const bins = document.querySelectorAll('.bin');
+    const items = document.querySelectorAll('.item');
 
-const itens = document.querySelectorAll('.item');
-const lixeiras = document.querySelectorAll('.lixeira');
-const feedback = document.getElementById('feedback');
-
-itens.forEach(item => {
-  item.addEventListener('click', () => {
-    itemSelecionado = item;
-    feedback.textContent = 'Agora clique na lixeira correta...';
-  });
-});
-
-lixeiras.forEach(lixeira => {
-  lixeira.addEventListener('click', () => {
-    if (!itemSelecionado) return;
-
-    const tipoItem = itemSelecionado.getAttribute('data-tipo');
-    const aceita = lixeira.getAttribute('data-aceita');
-
-    if (tipoItem === aceita) {
-      feedback.textContent = '✅ Acertou!';
-      itemSelecionado.style.opacity = '0.4';
-      itemSelecionado.style.pointerEvents = 'none';
-    } else {
-      feedback.textContent = '❌ Errou! Tente outra lixeira.';
+    // Utilidades
+    function setFeedback(type, text){
+      feedback.classList.remove('fb-ok','fb-err');
+      if(type==='ok') feedback.classList.add('fb-ok');
+      if(type==='err') feedback.classList.add('fb-err');
+      feedback.textContent = text;
+    }
+    function incCount(bin){
+      const span = bin.querySelector('.count');
+      span.textContent = String(parseInt(span.textContent,10)+1);
+    }
+    function markDone(el){
+      el.setAttribute('data-done','true');
+      el.draggable = false;
+      el.style.pointerEvents = 'none';
+    }
+    function resetAll(){
+      document.querySelectorAll('.item').forEach(it=>{
+        it.setAttribute('data-done','false');
+        it.draggable = true;
+        it.style.pointerEvents = '';
+      });
+      document.querySelectorAll('.bin .count').forEach(c=>c.textContent='0');
+      setFeedback(null,'Toque ou arraste um item até a lixeira correta.');
+      selectedItem = null;
     }
 
-    itemSelecionado = null;
-  });
-});
+    // --- Drag & Drop (desktop) ---
+    items.forEach(it=>{
+      it.addEventListener('dragstart', (e)=>{
+        if(it.getAttribute('data-done')==='true'){ e.preventDefault(); return; }
+        e.dataTransfer.setData('text/plain', it.getAttribute('data-type'));
+        e.dataTransfer.setData('text/id', it.outerHTML); // fallback
+        selectedItem = it; // também registra para reaproveitar
+      });
+      // Suporte por clique/toque
+      it.addEventListener('click', ()=>{
+        if(it.getAttribute('data-done')==='true') return;
+        document.querySelectorAll('.item').forEach(x=>x.style.outline='none');
+        it.style.outline = '2px solid var(--brand)';
+        selectedItem = it;
+        setFeedback(null,'Agora toque em uma lixeira.');
+      });
+    });
 
-document.getElementById('reset').addEventListener('click', () => {
-  itens.forEach(i => {
-    i.style.opacity = '1';
-    i.style.pointerEvents = 'auto';
-  });
-  feedback.textContent = 'Clique em um item para começar.';
-  itemSelecionado = null;
-});
-</script>
+    bins.forEach(bin=>{
+      // DnD
+      bin.addEventListener('dragover', (e)=>{ e.preventDefault(); bin.classList.add('dragover'); });
+      bin.addEventListener('dragleave', ()=> bin.classList.remove('dragover'));
+      bin.addEventListener('drop', (e)=>{
+        e.preventDefault(); bin.classList.remove('dragover');
+        const type = e.dataTransfer.getData('text/plain');
+        handleAttempt(type, selectedItem, bin);
+      });
+      // Clique (para toque)
+      bin.addEventListener('click', ()=>{
+        if(!selectedItem) return;
+        handleAttempt(selectedItem.getAttribute('data-type'), selectedItem, bin);
+      });
+    });
+
+    function handleAttempt(type, itemEl, bin){
+      if(!itemEl || itemEl.getAttribute('data-done')==='true') return;
+      const accept = bin.getAttribute('data-accept');
+      if(type===accept){
+        setFeedback('ok','✅ Acertou! Esse item vai na lixeira de ' + accept + '.');
+        incCount(bin);
+        markDone(itemEl);
+        itemEl.style.opacity = .5;
+        itemEl.style.outline = 'none';
+      } else {
+        setFeedback('err','❌ Ops! Tente outra lixeira.');
+        // animação err breve
+        bin.animate([
+          { transform:'translateX(0)' },
+          { transform:'translateX(-6px)' },
+          { transform:'translateX(6px)' },
+          { transform:'translateX(0)' }
+        ], { duration:250, iterations:1 });
+      }
+    }
+
+    document.getElementById('reset').addEventListener('click', resetAll);
+  </script>
 </body>
 </html>
